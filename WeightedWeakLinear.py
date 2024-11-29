@@ -1,44 +1,53 @@
+"""
+AI - Project Two
+Assignment 1
+Group Members:
+    - Luke Griffin      21334528
+    - Taha AL-Salihi    21302227
+    - Patrick Crotty    21336113
+    - Eoin O'Brien      21322902
+    - Mark Griffin      20260229
+
+Description:
+This code implements a ADABOOST CLASSIFIER USING ‘WEIGHTED WEAK LINEAR’ BASE CLASSIFIERS which achieves 100% Training
+Accuracy and 97% Testing Accuracy
+"""
+
 import numpy as np
 
-
-# Step 2: Define the WeightedWeakLinearClassifier class
+# WeightedWeakLinearClassifier class
 class WeightedWeakLinearClassifier:
     def __init__(self):
         self.threshold = None
         self.direction = None
 
-    def fit(self, X, y, sample_weights):
-        # Calculate the weighted mean for each class
-        positive_class = X[y == 1]
-        negative_class = X[y == -1]
-
+    def fit(self, x, y, sample_weights):
+        # weighted mean
+        positive_class = x[y == 1]
+        negative_class = x[y == -1]
         positive_weight = sample_weights[y == 1]
         negative_weight = sample_weights[y == -1]
 
         mean_pos = np.average(positive_class, axis=0, weights=positive_weight)
         mean_neg = np.average(negative_class, axis=0, weights=negative_weight)
-
-        # Orientation vector between the two means
+        # difference between the two means
         self.direction = mean_pos - mean_neg
         self.direction /= np.linalg.norm(self.direction)
 
-        # Project all points onto the direction vector
-        projections = X @ self.direction
+        # all points projected
+        projections = x @ self.direction
         sorted_indices = np.argsort(projections)
 
-        # Find best split point
-        min_error = float('inf')
+        min_error = float('inf')    # find best point
         for i in range(1, len(projections)):
             threshold = (projections[sorted_indices[i - 1]] + projections[sorted_indices[i]]) / 2
             predictions = np.where(projections >= threshold, 1, -1)
             error = np.sum(sample_weights[predictions != y])
-
             if error < min_error:
                 min_error = error
                 self.threshold = threshold
 
-    def predict(self, X):
-        # Project onto the chosen direction and apply threshold
-        projections = X @ self.direction
+    def predict(self, x):
+        projections = x @ self.direction
         return np.where(projections >= self.threshold, 1, -1)
 

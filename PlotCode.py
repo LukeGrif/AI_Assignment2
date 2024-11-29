@@ -1,72 +1,68 @@
+"""
+AI - Project Two
+Assignment 1
+Group Members:
+    - Luke Griffin      21334528
+    - Taha AL-Salihi    21302227
+    - Patrick Crotty    21336113
+    - Eoin O'Brien      21322902
+    - Mark Griffin      20260229
+
+Description:
+This code implements a ADABOOST CLASSIFIER USING ‘WEIGHTED WEAK LINEAR’ BASE CLASSIFIERS which achieves 100% Training
+Accuracy and 97% Testing Accuracy
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from AdaBoostCode import AdaBoost
 
-# Step 1: Load Data
-# Load training and testing data
+# load the data
 train_data = np.loadtxt('adaboost-train-24.txt')
 test_data = np.loadtxt('adaboost-test-24.txt')
 
-# Separate features (X) and labels (y)
-X_train = train_data[:, :2]  # The first two columns are features
-y_train = train_data[:, 2]  # The third column is the label
+# convert to x and y values
+X_train, y_train = train_data[:, :2], train_data[:, 2]
+X_test, y_test = test_data[:, :2], test_data[:, 2]
 
-X_test = test_data[:, :2]
-y_test = test_data[:, 2]
-
-# Step 4: Train the AdaBoost classifier and plot accuracy
-# Initialize and train AdaBoost
-adaboost = AdaBoost(n_learners=50)
+# 88 learners is optimum performance from trial and error
+adaboost = AdaBoost(n_learners=88)
 adaboost.fit(X_train, y_train)
-
-# Track accuracy as we add more learners
 train_accuracies = []
 test_accuracies = []
-for i in range(1, len(adaboost.learners) + 1):
-    partial_ensemble = AdaBoost(n_learners=i)
-    partial_ensemble.learners = adaboost.learners[:i]
-    partial_ensemble.learner_weights = adaboost.learner_weights[:i]
 
-    train_predictions = partial_ensemble.predict(X_train)
-    test_predictions = partial_ensemble.predict(X_test)
+for num_learners in range(1, len(adaboost.learners) + 1):
+    partial_model = AdaBoost(n_learners=num_learners)
+    partial_model.learners = adaboost.learners[:num_learners]
+    partial_model.learner_weights = adaboost.learner_weights[:num_learners]
+    train_prediction = partial_model.predict(X_train)
+    test_prediction = partial_model.predict(X_test)
+    train_accuracies.append(np.mean(train_prediction == y_train))
+    test_accuracies.append(np.mean(test_prediction == y_test))
 
-    train_accuracy = np.mean(train_predictions == y_train)
-    test_accuracy = np.mean(test_predictions == y_test)
-
-    train_accuracies.append(train_accuracy)
-    test_accuracies.append(test_accuracy)
-
-# Plot accuracy
+# plot fitted training and testing values
+plt.figure(figsize=(8, 6))
 plt.plot(range(1, len(train_accuracies) + 1), train_accuracies, label='Train Accuracy')
 plt.plot(range(1, len(test_accuracies) + 1), test_accuracies, label='Test Accuracy')
 plt.xlabel('Number of Learners')
 plt.ylabel('Accuracy')
-plt.title('AdaBoost Accuracy over Number of Learners')
+plt.title('AdaBoost Accuracy with Increasing Learners')
 plt.legend()
-plt.show()
+plt.grid(True)
 
-# Create a mesh grid for the feature space
+# when plot exited grid plot appears
 x_min, x_max = X_train[:, 0].min() - 1, X_train[:, 0].max() + 1
 y_min, y_max = X_train[:, 1].min() - 1, X_train[:, 1].max() + 1
 xx, yy = np.meshgrid(np.linspace(x_min, x_max, 500), np.linspace(y_min, y_max, 500))
-
-# Flatten the grid to pass into the model for predictions
 grid_points = np.c_[xx.ravel(), yy.ravel()]
-Z = adaboost.predict(grid_points)  # Predict class for each point in the grid
-Z = Z.reshape(xx.shape)  # Reshape the predictions to match the grid shape
-
-# Plot the decision boundary
+Z = adaboost.predict(grid_points).reshape(xx.shape)
 plt.figure(figsize=(10, 8))
-plt.contourf(xx,yy, Z, alpha=0.8, cmap='RdBu')  # Contour plot for the decision boundary
-
-# Overlay the training data
+plt.contourf(xx, yy, Z, alpha=0.8, cmap='RdBu')  # Decision regions
 plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap='RdBu', edgecolor='k', s=100)
+plt.colorbar(label='Predicted Label')
+plt.xlabel('Data 1')
+plt.ylabel('Data 2')
+plt.title('AdaBoost Decision Boundary')
+plt.grid(True)
 
-# Add labels and title
-plt.xlabel('Feature 1')
-plt.ylabel('Feature 2')
-plt.title('AdaBoost Classification Boundary')
-plt.colorbar(label='Predicted Label')  # Optional: Color bar for decision regions
-
-# Show the plot
 plt.show()
